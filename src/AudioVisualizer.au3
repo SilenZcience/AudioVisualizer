@@ -89,7 +89,7 @@ Global $OverallX = 0
 Global $OverallY = 0
 
 Global $SinPen1, $SinPen2
-Global $Sin = False
+Global $Sin = True
 Global $Sin1 = True
 Global $Sin2 = True
 Global $SinFrom1 = 0
@@ -170,14 +170,11 @@ While 1
 			_BASS_ChannelPlay($StreamHandle, 0)
 		EndIf
 	EndIf
-	If $UseDeviceSound Then ContinueLoop
+	If $UseDeviceSound or Ubound($SongArray) == 0 Then ContinueLoop
 
 	If _IsPressed(25, $user32) And WinActive($hwnd) And TimerDiff($Timer1) > 300 Then ;leftarrow
-		If $SongArrayIndex > 0 Then
-			$SongArrayIndex -= 2
-		Else
-			$SongArrayIndex -= 1
-		EndIf
+		If $SongArrayIndex > 0 Then $SongArrayIndex -= 1
+        $SongArrayIndex -= 1
 		_StartFile()
 		$Timer1 = TimerInit()
 	EndIf
@@ -667,6 +664,8 @@ Func _GUIControl()
 				EndSwitch
 			Case $idSwitchToDeviceSound
 				$CableDevice = _GetNextDeviceChannel()
+                ConsoleWrite("!deviceid: " & $SoundDeviceID & @LF)
+                _ArrayDisplay($CableDevice)
 				If @error Then
 					$DeviceSoundOn = False
 					GUICtrlSetData($idSwitchToDeviceSound, "InternalBass")
@@ -678,6 +677,8 @@ Func _GUIControl()
 				EndIf
 			Case $idApplyChanges
 				If $DeviceSoundOn Then
+                    _BASS_RecordFree()
+                    _BASS_RecordInit($SoundDeviceID)
 					_BASS_RecordSetInput($SoundDeviceID, $BASS_INPUT_ON, 1)
 					$StreamHandle = _BASS_RecordStart(44100, 2, _WinAPI_MakeLong(0, 10))
 				ElseIf $DeviceSoundOn <> $UseDeviceSound Then
@@ -686,6 +687,7 @@ Func _GUIControl()
 					Else
 						$SongArrayIndex -= 1
 					EndIf
+                    $StreamHandle = -1
 					_StartFile()
 					_BASS_ChannelPause($StreamHandle)
 				EndIf
@@ -823,9 +825,9 @@ Func _ShowGraphics()
 	_GDIPlus_GraphicsClear($backbuffer)
 	Local $call = _BASS_ChannelGetData($StreamHandle, DllStructGetPtr($b), $BASS_DATA_FFT256)
 
-	If $Sin Then _SinViz($vizbuffer, $b, $SinPen1, $SinPen2)
-	If $Circle Then _CircleViz($vizbuffer, $b, $CircleBrush)
-	If $Triangle Then _TriangleViz($vizbuffer, $b, $TrianglePen)
+	If $Sin Then _SinViz($b)
+	If $Circle Then _CircleViz($b)
+	If $Triangle Then _TriangleViz($b)
 
 	_GDIPlus_GraphicsDrawImageRect($backbuffer, $vizbitmap, 0, 0, $width, $height)
 
@@ -924,7 +926,7 @@ Func _Get_playstate()
 	Return $returnstate
 EndFunc   ;==>_Get_playstate
 
-Func _TriangleViz($surface, $fftstruct, $pentri)
+Func _TriangleViz($fftstruct)
 	Local $Sum = 0
 	Local $x1, $x2, $x3, $y1, $y2, $y3, $size
 
@@ -935,38 +937,54 @@ Func _TriangleViz($surface, $fftstruct, $pentri)
 	$TriangleGroundAngle += $TriangleGroundAnglePlus
 	If $TriangleGroundAngle > 2*$PI Then $TriangleGroundAngle -= 2*$PI
 	$size = 50 + $Sum * $TriangleSize
-	$x1 = Cos($TriangleGroundAngle + $PI / 2) * $size + $width / 2 + $OverallX
-	$y1 = Sin($TriangleGroundAngle + $PI / 2) * $size + $height / 2 + $OverallY
-	$x2 = Cos($TriangleGroundAngle + $PI / 2 + (2 * $PI) / 3) * $size + $width / 2 + $OverallX
-	$y2 = Sin($TriangleGroundAngle + $PI / 2 + (2 * $PI) / 3) * $size + $height / 2 + $OverallY
-	$x3 = Cos($TriangleGroundAngle + $PI / 2 + ((2 * $PI) / 3) * 2) * $size + $width / 2 + $OverallX
-	$y3 = Sin($TriangleGroundAngle + $PI / 2 + ((2 * $PI) / 3) * 2) * $size + $height / 2 + $OverallY
-	_GDIPlus_GraphicsDrawLine($surface, $x1, $y1, $x2, $y2, $pentri)
-	_GDIPlus_GraphicsDrawLine($surface, $x2, $y2, $x3, $y3, $pentri)
-	_GDIPlus_GraphicsDrawLine($surface, $x3, $y3, $x1, $y1, $pentri)
+
+    Local $TriangleRoundAnglePlusHalfPI = $TriangleGroundAngle + $PI / 2
+    Local $TwoPiThird = (2 * $PI) / 3
+    Local $FourPiThird = (4 * $PI) / 3
+    Local $halfWidth = $width / 2
+    Local $halfheight = $height / 2
+    Local $XIntend = $halfWidth + $OverallX
+    Local $YIntend = $halfheight + $OverallY
+	$x1 = Cos($TriangleRoundAnglePlusHalfPI) * $size + $XIntend
+	$y1 = Sin($TriangleRoundAnglePlusHalfPI) * $size + $YIntend
+	$x2 = Cos($TriangleRoundAnglePlusHalfPI + $TwoPiThird) * $size + $XIntend
+	$y2 = Sin($TriangleRoundAnglePlusHalfPI + $TwoPiThird) * $size + $YIntend
+	$x3 = Cos($TriangleRoundAnglePlusHalfPI + $FourPiThird) * $size + $XIntend
+	$y3 = Sin($TriangleRoundAnglePlusHalfPI + $FourPiThird) * $size + $YIntend
+
+	_GDIPlus_GraphicsDrawLine($vizbuffer, $x1, $y1, $x2, $y2, $TrianglePen)
+	_GDIPlus_GraphicsDrawLine($vizbuffer, $x2, $y2, $x3, $y3, $TrianglePen)
+	_GDIPlus_GraphicsDrawLine($vizbuffer, $x3, $y3, $x1, $y1, $TrianglePen)
 EndFunc   ;==>_TriangleViz
 
-Func _CircleViz($surface, $fftstruct, $brushc)
+Func _CircleViz($fftstruct)
 	Local $fft, $x, $y
 	Local $dots = Random($CircleAmountFrom, $CircleAmounTo, 1)
 	SRandom($CircleSeed)
-	For $i = 1 To $dots
+    Local $XIntend = $width / 2 + $OverallX
+    Local $YIntend = $height / 2 + $OverallY
+    Local $RootRootFft, $iterationByDots
+	For $i = 1 To $dots Step 2
 		$fft = DllStructGetData($fftstruct, 1, Random(1, $CircleIndexTo, 1)) ;$randvalues[$i-1])
+        $RootRootFft = $CircleSize * Sqrt(Sqrt($fft * 100000))
+        $iterationByDots = $i / $dots
+        $x = (Cos(-1 * $PI * $iterationByDots) * $RootRootFft) + $XIntend
+        $y = (Sin(-1 * $PI * $iterationByDots) * $RootRootFft) + $YIntend
 
-		If Mod($i, 2) = 0 Then
-			$x = (Cos($PI * ($i / $dots)) * $CircleSize * Sqrt(Sqrt($fft * 100000))) + $width / 2 + $OverallX
-			$y = (Sin($PI * ($i / $dots)) * $CircleSize * Sqrt(Sqrt($fft * 100000))) + $height / 2 + $OverallY
-		Else
-			$x = (Cos(-1 * $PI * ($i / $dots)) * $CircleSize * Sqrt(Sqrt($fft * 100000))) + $width / 2 + $OverallX
-			$y = (Sin(-1 * $PI * ($i / $dots)) * $CircleSize * Sqrt(Sqrt($fft * 100000))) + $height / 2 + $OverallY
-		EndIf
-
-		_GDIPlus_GraphicsFillEllipse($surface, $x, $y, 2, 2, $brushc)
+		_GDIPlus_GraphicsFillEllipse($vizbuffer, $x, $y, 2, 2, $CircleBrush)
 	Next
+	For $i = 2 To $dots Step 2
+		$fft = DllStructGetData($fftstruct, 1, Random(1, $CircleIndexTo, 1)) ;$randvalues[$i-1])
+        $RootRootFft = $CircleSize * Sqrt(Sqrt($fft * 100000))
+        $iterationByDots = $i / $dots
+        $x = (Cos($PI * $iterationByDots) * $RootRootFft) + $XIntend
+        $y = (Sin($PI * $iterationByDots) * $RootRootFft) + $YIntend
 
+		_GDIPlus_GraphicsFillEllipse($vizbuffer, $x, $y, 2, 2, $CircleBrush)
+	Next
 EndFunc   ;==>_CircleViz
 
-Func _SinViz($surface, $fftstruct, $SinPen1, $SinPen2)
+Func _SinViz($fftstruct)
 	Local $oldx, $oldy, $fft, $y
 
 	If $Sin1 Then
@@ -976,7 +994,7 @@ Func _SinViz($surface, $fftstruct, $SinPen1, $SinPen2)
 			$fft = DllStructGetData($fftstruct, 1, ($i - ($SinFrom1-$MoveFactor)) / $Sin1Amp)
 
 			$y = $height / 2 + Sin($i) * Sqrt($fft) * 500
-			_GDIPlus_GraphicsDrawLine($surface, $oldx, $oldy, $i, $y, $SinPen1)
+			_GDIPlus_GraphicsDrawLine($vizbuffer, $oldx, $oldy, $i, $y, $SinPen1)
 			$oldx = $i
 			$oldy = $y
 		Next
@@ -988,7 +1006,7 @@ Func _SinViz($surface, $fftstruct, $SinPen1, $SinPen2)
 			$fft = DllStructGetData($fftstruct, 1, (($SinFrom2+$MoveFactor) - $i) / $Sin2Amp)
 
 			$y = ($height / 2 - Sin($i) * Sqrt($fft) * 500)
-			_GDIPlus_GraphicsDrawLine($surface, $i, $y, $oldx, $oldy, $SinPen2)
+			_GDIPlus_GraphicsDrawLine($vizbuffer, $i, $y, $oldx, $oldy, $SinPen2)
 			$oldx = $i
 			$oldy = $y
 		Next
@@ -1017,9 +1035,14 @@ Func WM_DROPFILES_FUNC($hwnd, $msgID, $wParam, $lParam)
 EndFunc   ;==>WM_DROPFILES_FUNC
 
 Func _StartFile()
+    _ArrayDisplay($SongArray)
+    ConsoleWrite("!songindex: "  & $SongArrayIndex & @LF)
+    If Ubound($SongArray) == 0 Then Return
 	_BASS_StreamFree($StreamHandle)
 	Local $ptr, $temp
 	$SongArrayIndex += 1
+    If $SongArrayIndex >= Ubound($SongArray) Then $SongArrayIndex = 0
+    If $SongArrayIndex < 0 Then $SongArrayIndex = 0
 	$StreamHandle = _BASS_StreamCreateFile(False, $SongArray[$SongArrayIndex], 0, 0, 0)
 
 	If $StreamHandle = 0 Then Return
@@ -1096,7 +1119,7 @@ Func _GetID3StructFromOGGComment($ptr)
 EndFunc   ;==>_GetID3StructFromOGGComment
 
 Func _Mousewheel($hwnd, $msg, $l, $r) ;abfrage mausrad
-	If $UseDeviceSound Then Return
+    If $UseDeviceSound or Ubound($SongArray) == 0 Then Return
 	If $l = 0xFF880000 Then ; Mouse wheel up
 		If $SoundSet > 0 Then $SoundSet -= 1
 	Else ; Mouse wheel down
