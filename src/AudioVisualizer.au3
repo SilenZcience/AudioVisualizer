@@ -63,11 +63,11 @@ Global Const $backbuffer = _GDIPlus_ImageGetGraphicsContext($bitmap)
 Global Const $vizbuffer = _GDIPlus_ImageGetGraphicsContext($vizbitmap)
 ;Global Const $vizbuffer2 = _GDIPlus_ImageGetGraphicsContext($vizbitmap)
 
-Global $family = _GDIPlus_FontFamilyCreate("Arial")
-Global $font = _GDIPlus_FontCreate($family, 26 * (@DesktopWidth/1920))
-Global $format = _GDIPlus_StringFormatCreate()
+Global Const $family = _GDIPlus_FontFamilyCreate("Arial")
+Global Const $font = _GDIPlus_FontCreate($family, 26 * (@DesktopWidth/1920))
+Global Const $format = _GDIPlus_StringFormatCreate()
 _GDIPlus_StringFormatSetAlign($format, 1)
-Global $rect = _GDIPlus_RectFCreate(0, 150, $width, $height)
+Global Const $rect = _GDIPlus_RectFCreate(0, 150, $width, $height)
 Global $WhiteTransBrushes[256]
 For $i = UBound($WhiteTransBrushes) - 1 To 0 Step -1
 	$WhiteTransBrushes[$i] = _GDIPlus_BrushCreateSolid("0x" & Hex($i, 2) & "FFFFFF")
@@ -141,7 +141,7 @@ If Not $TriangleColortime And Not $TriangleColortimeinv Then $TrianglePen = _GDI
 Global $UseDeviceSound = False
 Global $SoundDeviceID = -1
 
-Global $stream
+Global $StreamHandle
 Global $user32 = DllOpen("user32.dll")
 Global $ID3 = "char id[3];char title[30];char artist[30];char album[30];char year[4];char comment[30];ubyte genre;"
 
@@ -159,20 +159,20 @@ While 1
 
 	_ShowGraphics()
 
-	If _IsPressed(02, $user32.dll) And WinActive($hwnd) Then ;rightclick
-		If _Get_playstate($stream) = 2 and not $UseDeviceSound Then
-			$BASS_PAUSE_POS = _BASS_ChannelGetPosition($stream, 0)
+	If _IsPressed(02, $user32) And WinActive($hwnd) Then ;rightclick
+		If _Get_playstate() = 2 and not $UseDeviceSound Then
+			$BASS_PAUSE_POS = _BASS_ChannelGetPosition($StreamHandle, 0)
 			If not @Compiled Then ConsoleWrite("Pause Position: " & $BASS_PAUSE_POS & @CRLF)
-			_BASS_ChannelPause($stream)
+			_BASS_ChannelPause($StreamHandle)
 		EndIf
 		_GUIControl()
-		If _Get_playstate($stream) = 3 and not $UseDeviceSound Then
-			_BASS_ChannelPlay($stream, 0)
+		If _Get_playstate() = 3 and not $UseDeviceSound Then
+			_BASS_ChannelPlay($StreamHandle, 0)
 		EndIf
 	EndIf
 	If $UseDeviceSound Then ContinueLoop
 
-	If _IsPressed(25, $user32.dll) And WinActive($hwnd) And TimerDiff($Timer1) > 300 Then ;leftarrow
+	If _IsPressed(25, $user32) And WinActive($hwnd) And TimerDiff($Timer1) > 300 Then ;leftarrow
 		If $SongArrayIndex > 0 Then
 			$SongArrayIndex -= 2
 		Else
@@ -181,16 +181,16 @@ While 1
 		_StartFile()
 		$Timer1 = TimerInit()
 	EndIf
-	If _IsPressed(27, $user32.dll) And WinActive($hwnd) And TimerDiff($Timer1) > 300 Then ;rightarrow
+	If _IsPressed(27, $user32) And WinActive($hwnd) And TimerDiff($Timer1) > 300 Then ;rightarrow
 		If $SongArrayIndex < UBound($SongArray) - 1 Then _StartFile()
 		$Timer1 = TimerInit()
 	EndIf
-	If _IsPressed(20, $user32.dll) And WinActive($hwnd) And TimerDiff($Timer1) > 300 Then ;Space
-		_Switch_AudioPlayback($stream)
+	If _IsPressed(20, $user32) And WinActive($hwnd) And TimerDiff($Timer1) > 300 Then ;Space
+		_Switch_AudioPlayback()
 		$Timer1 = TimerInit()
 	EndIf
 	If TimerDiff($Timer2) > 750 Then
-		$SongStateNow = _Get_playstate($stream)
+		$SongStateNow = _Get_playstate()
 		If $SongStateNow = 1 And $SongArrayIndex < UBound($SongArray) - 1 Then _StartFile()
 		If $SongStateNow <> $SongStateLast Then
 			If not @Compiled Then ConsoleWrite("SongState: " & $SongStateNow & @CRLF)
@@ -679,7 +679,7 @@ Func _GUIControl()
 			Case $idApplyChanges
 				If $DeviceSoundOn Then
 					_BASS_RecordSetInput($SoundDeviceID, $BASS_INPUT_ON, 1)
-					$stream = _BASS_RecordStart(44100, 2, _WinAPI_MakeLong(0, 10))
+					$StreamHandle = _BASS_RecordStart(44100, 2, _WinAPI_MakeLong(0, 10))
 				ElseIf $DeviceSoundOn <> $UseDeviceSound Then
 					If $SongArrayIndex > 0 Then
 						$SongArrayIndex -= 2
@@ -687,7 +687,7 @@ Func _GUIControl()
 						$SongArrayIndex -= 1
 					EndIf
 					_StartFile()
-					_BASS_ChannelPause($stream)
+					_BASS_ChannelPause($StreamHandle)
 				EndIf
 				$UseDeviceSound = $DeviceSoundOn
 				Switch $ModeState
@@ -821,7 +821,7 @@ EndFunc
 
 Func _ShowGraphics()
 	_GDIPlus_GraphicsClear($backbuffer)
-	Local $call = _BASS_ChannelGetData($stream, DllStructGetPtr($b), $BASS_DATA_FFT256)
+	Local $call = _BASS_ChannelGetData($StreamHandle, DllStructGetPtr($b), $BASS_DATA_FFT256)
 
 	If $Sin Then _SinViz($vizbuffer, $b, $SinPen1, $SinPen2)
 	If $Circle Then _CircleViz($vizbuffer, $b, $CircleBrush)
@@ -860,28 +860,28 @@ Func _ShowGraphics()
 	EndIf
 EndFunc
 
-Func _Switch_AudioPlayback($MusicHandle)
-	If _Get_playstate($MusicHandle) = 2 Then
-		$BASS_PAUSE_POS = _BASS_ChannelGetPosition($MusicHandle, 0)
+Func _Switch_AudioPlayback()
+	If _Get_playstate() = 2 Then
+		$BASS_PAUSE_POS = _BASS_ChannelGetPosition($StreamHandle, 0)
 		If not @Compiled Then ConsoleWrite("Pause Position: " & $BASS_PAUSE_POS & @CRLF)
-		_BASS_ChannelPause($MusicHandle)
-		Local $ChannelPosition = _GetSongPositionString($MusicHandle, $BASS_PAUSE_POS)
+		_BASS_ChannelPause($StreamHandle)
+		Local $ChannelPosition = _GetSongPositionString($BASS_PAUSE_POS)
 		$SongString = "Paused (" & $ChannelPosition & ")"
 		$SongStringOpacity = 255
-	ElseIf _Get_playstate($MusicHandle) = 3 Then
-		_BASS_ChannelPlay($MusicHandle, 0)
+	ElseIf _Get_playstate() = 3 Then
+		_BASS_ChannelPlay($StreamHandle, 0)
 		$SongString = "Resumed"
 		$SongStringOpacity = 255
 	EndIf
 EndFunc   ;==>_Switch_AudioPlayback
 
-Func _GetSongPositionString($MusicHandle, $Pause_Position)
+Func _GetSongPositionString($Pause_Position)
 	Local $CurrentPosition, $MaximalPosition
 	Local $ReturnString = ""
 
-	$CurrentPosition = _BASS_ChannelBytes2Seconds($MusicHandle, $Pause_Position)
-	Local $BASS_ret_ = _BASS_ChannelGetLength($MusicHandle, 0)
-	$MaximalPosition = _BASS_ChannelBytes2Seconds($MusicHandle, $BASS_ret_)
+	$CurrentPosition = _BASS_ChannelBytes2Seconds($StreamHandle, $Pause_Position)
+	Local $BASS_ret_ = _BASS_ChannelGetLength($StreamHandle, 0)
+	$MaximalPosition = _BASS_ChannelBytes2Seconds($StreamHandle, $BASS_ret_)
 
 	$ReturnString = _TicksToTimeFormat($CurrentPosition*1000) & "/" & _TicksToTimeFormat($MaximalPosition*1000)
 
@@ -908,9 +908,9 @@ Func _TicksToTimeFormat($iTicks, $iHours = 0, $iMins = 0, $iSecs = 0)
 	EndIf
 EndFunc   ;==>_TicksToTime
 
-Func _Get_playstate($MusicHandle)
+Func _Get_playstate()
 	Local $returnstate
-	Local $BASS_ret_ = _BASS_ChannelIsActive($MusicHandle)
+	Local $BASS_ret_ = _BASS_ChannelIsActive($StreamHandle)
 	Switch $BASS_ret_
 		Case $BASS_ACTIVE_STOPPED
 			$returnstate = 1
@@ -1017,20 +1017,20 @@ Func WM_DROPFILES_FUNC($hwnd, $msgID, $wParam, $lParam)
 EndFunc   ;==>WM_DROPFILES_FUNC
 
 Func _StartFile()
-	_BASS_StreamFree($stream)
+	_BASS_StreamFree($StreamHandle)
 	Local $ptr, $temp
 	$SongArrayIndex += 1
-	$stream = _BASS_StreamCreateFile(False, $SongArray[$SongArrayIndex], 0, 0, 0)
+	$StreamHandle = _BASS_StreamCreateFile(False, $SongArray[$SongArrayIndex], 0, 0, 0)
 
-	If $stream = 0 Then Return
+	If $StreamHandle = 0 Then Return
 	If StringRight($SongArray[$SongArrayIndex], 4) = "flac" Or StringRight($SongArray[$SongArrayIndex], 4) = ".ogg" Then
-		$ptr = _BASS_ChannelGetTags($stream, 2)
+		$ptr = _BASS_ChannelGetTags($StreamHandle, 2)
 		$temp = _GetID3StructFromOGGComment($ptr)
 		$SongString = DllStructGetData($temp, "Title")
 		If StringLen(DllStructGetData($temp, "Artist")) > 1 Then $SongString &= " - " & DllStructGetData($temp, "Artist")
 		$SongStringOpacity = 255
 	Else
-		$ptr = _BASS_ChannelGetTags($stream, 0)
+		$ptr = _BASS_ChannelGetTags($StreamHandle, 0)
 		$temp = DllStructCreate($ID3, $ptr)
 		$SongString = DllStructGetData($temp, "Title")
 		If StringLen(DllStructGetData($temp, "Artist")) > 1 Then $SongString &= " - " & DllStructGetData($temp, "Artist")
@@ -1038,7 +1038,7 @@ Func _StartFile()
 	EndIf
 	If $SongString = "0" Then $SongString = ""
 
-	_BASS_ChannelPlay($stream, 1)
+	_BASS_ChannelPlay($StreamHandle, 1)
 EndFunc   ;==>_StartFile
 
 Func _Folder($Folder)
@@ -1112,7 +1112,7 @@ Func _close()
 EndFunc   ;==>_close
 
 Func _close_reg()
-	_BASS_ChannelStop($stream)
+	_BASS_ChannelStop($StreamHandle)
 	_BASS_Free()
 	DllClose("user32.dll")
 	For $i = 0 To UBound($WhiteTransBrushes) - 1
