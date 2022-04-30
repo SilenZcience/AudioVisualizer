@@ -508,7 +508,7 @@ Func _GUIControl()
 
 	;--------------------------------------------------------------------BottonLayer
 	Local $idSwitchToDeviceSound = GUICtrlCreateButton("", 10, $hheight - 35, 125, 25)
-	GUICtrlSetData($idSwitchToDeviceSound, ($DeviceSoundOn ? "DeviceSound" : "InternalBass"))
+	GUICtrlSetData($idSwitchToDeviceSound, ($DeviceSoundOn ? "SoundDevice" : "MusicFile"))
 	GUICtrlSetFont(-1, 11)
 	Local $idSwitchToDeviceSoundLabel = GUICtrlCreateLabel("", 145, $hheight - 31, $hwidth - 145 - 145, 17)
 	If $UseDeviceSound Then
@@ -516,7 +516,8 @@ Func _GUIControl()
 		If not @error Then GUICtrlSetData($idSwitchToDeviceSoundLabel, $DeviceInfo[0])
 	EndIf
 	GUICtrlSetFont(-1, 11)
-
+    GUICtrlSetColor(-1, 0xE1E1E1)
+    
 	Local $idApplyChanges = GUICtrlCreateButton("Apply Changes", $hwidth - 135, $hheight - 35, 125, 25)
 	GUICtrlSetFont(-1, 11)
 	;-------------------------------------------------------------------------------
@@ -673,11 +674,11 @@ Func _GUIControl()
 				$CableDevice = _GetNextDeviceChannel()
 				If @error Then
 					$DeviceSoundOn = False
-					GUICtrlSetData($idSwitchToDeviceSound, "InternalBass")
+					GUICtrlSetData($idSwitchToDeviceSound, "MusicFile")
 					GUICtrlSetData($idSwitchToDeviceSoundLabel, "")
 				Else
 					$DeviceSoundOn = True
-					GUICtrlSetData($idSwitchToDeviceSound, "DeviceSound")
+					GUICtrlSetData($idSwitchToDeviceSound, "SoundDevice")
 					GUICtrlSetData($idSwitchToDeviceSoundLabel, $CableDevice[0])
 				EndIf
 			Case $idApplyChanges
@@ -795,6 +796,9 @@ Func _GUIControl()
 					_ShowGraphics()
 					$Timer3 = TimerInit()
 				EndIf
+                If _IsPressed(02, $user32) and WinActive($hwnd) Then
+                    WinActivate($hGUI)
+                EndIf
 		EndSwitch
 	WEnd
 
