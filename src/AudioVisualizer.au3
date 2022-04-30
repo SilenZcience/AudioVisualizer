@@ -57,7 +57,6 @@ Global Const $bitmap = _GDIPlus_BitmapCreateFromGraphics($width, $height, $graph
 Global Const $vizbitmap = _GDIPlus_BitmapCreateFromGraphics($width, $height, $graphics)
 Global Const $backbuffer = _GDIPlus_ImageGetGraphicsContext($bitmap)
 Global Const $vizbuffer = _GDIPlus_ImageGetGraphicsContext($vizbitmap)
-;Global Const $vizbuffer2 = _GDIPlus_ImageGetGraphicsContext($vizbitmap)
 
 Global Const $family = _GDIPlus_FontFamilyCreate("Arial")
 Global Const $font = _GDIPlus_FontCreate($family, 26 * (@DesktopWidth/1920))
@@ -71,7 +70,6 @@ Next
 
 _GDIPlus_GraphicsSetSmoothingMode($backbuffer, 2)
 _GDIPlus_GraphicsSetSmoothingMode($vizbuffer, 2)
-;_GDIPlus_GraphicsSetSmoothingMode($vizbuffer2, 2)
 
 Global $HexTimeColor[2] = [-1, -1]
 $HexTimeColor[0] = Hex(Int((@HOUR * 255) / 24), 2) & Hex(Int((@MIN * 255) / 60), 2) & Hex(Int((@SEC * 255) / 60), 2)
@@ -81,7 +79,7 @@ $HexTimeColor[1] = Hex(255 - $aColor[0], 2) & Hex(255 - $aColor[1], 2) & Hex(255
 Global $Delete = False
 Global $Fade = True ;0/1 of 2
 Global $FadeAmount = 16
-Global $blacktrans = _GDIPlus_BrushCreateSolid("0x" & Hex($FadeAmount) & "000000")
+Global $blacktrans = _GDIPlus_BrushCreateSolid("0x" & Hex($FadeAmount, 2) & "000000")
 Global $OverallX = 0
 Global $OverallY = 0
 
@@ -715,7 +713,7 @@ Func _GUIControl()
 						$Delete = False
 						$Fade = True
 						$FadeAmount = GUICtrlRead($FadeStrengthInput)
-						$blacktrans = _GDIPlus_BrushCreateSolid("0x" & Hex($FadeAmount) & "000000")
+						$blacktrans = _GDIPlus_BrushCreateSolid("0x" & Hex($FadeAmount, 2) & "000000")
 					Case "Stay"
 						$Delete = False
 						$Fade = False
@@ -829,7 +827,7 @@ EndFunc
 
 Func _ShowGraphics()
 	_GDIPlus_GraphicsClear($backbuffer)
-	Local $call = _BASS_ChannelGetData($StreamHandle, DllStructGetPtr($b), $BASS_DATA_FFT256)
+	_BASS_ChannelGetData($StreamHandle, DllStructGetPtr($b), $BASS_DATA_FFT256)
 
 	If $Sin Then _SinViz($b)
 	If $Circle Then _CircleViz($b)
@@ -872,10 +870,8 @@ Func _ShowGraphics()
 
 	If $Delete Then
 		_GDIPlus_GraphicsClear($vizbuffer, 0xFF000000)
-		;_GDIPlus_GraphicsClear($vizbuffer2, 0xFF000000)
 	ElseIf $Fade Then
 		_GDIPlus_GraphicsFillRect($vizbuffer, 0, 0, $width, $height, $blacktrans)
-		;_GDIPlus_GraphicsFillRect($vizbuffer2, 0, 0, $width, $height, $blacktrans)
 	EndIf
 EndFunc
 
@@ -1161,7 +1157,6 @@ Func _close_reg()
 	_GDIPlus_PenDispose($SinPen2)
 	_GDIPlus_PenDispose($TrianglePen)
 	_GDIPlus_GraphicsDispose($vizbuffer)
-    ;_GDIPlus_GraphicsDispose($vizbuffer2)
 	_GDIPlus_GraphicsDispose($backbuffer)
 	_GDIPlus_BitmapDispose($vizbitmap)
 	_GDIPlus_BitmapDispose($bitmap)
