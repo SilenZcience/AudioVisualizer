@@ -37,6 +37,9 @@
          </ul>
       </li>
       <li><a href="#usage">Usage</a>
+         <ul>
+         <li><a href="#examples">Examples</a></li>
+         </ul>
       </li>
       <li><a href="#contact">Contact</a></li>
    </ol>
@@ -106,6 +109,18 @@ AudioVisualizer.exe
 - Install any virtual cable and connect it to your playback-device (this way your sound-output will be accessible as a record-device).
 
 - See 2)
+
+### Examples
+
+![](img/control.png?raw=true "control.png")
+
+![](img/example1.png?raw=true "example1.png")
+
+![](img/example2.png?raw=true "example2.png")
+
+![](img/example3.png?raw=true "example4.png")
+
+![](img/example4.png?raw=true "example4.png")
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
