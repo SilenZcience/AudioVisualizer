@@ -1069,13 +1069,11 @@ EndFunc   ;==>_StartFile
 Func _Folder($Folder)
 	Local $sDrive = "", $sDir = "", $sFileName = "", $sExtension = ""
 	Local $aPathSplit
-	Local $SubFiles = _FileListToArrayRec($Folder, "*", $FLTAR_FILES, $FLTAR_RECUR, $FLTAR_SORT, $FLTAR_FULLPATH)
-	For $i = 1 To UBound($SubFiles) - 1
+	Local $SubFiles = _FileListToArrayRec($Folder, "*.mp3;*.wav;*.flac;*.ogg", $FLTAR_FILES, $FLTAR_RECUR, $FLTAR_SORT, $FLTAR_FULLPATH)
+    For $i = 1 To UBound($SubFiles) - 1
 		$aPathSplit = _PathSplit($SubFiles[$i], $sDrive, $sDir, $sFileName, $sExtension)
-		If $sExtension == ".mp3" Or $sExtension == ".wav" Or $sExtension == ".flac" Or $sExtension == ".ogg" Then
-			_ArrayAdd($SongArray, $SubFiles[$i])
-			If not @Compiled Then ConsoleWrite("Added " & $SubFiles[$i] & @CRLF)
-		EndIf
+		_ArrayAdd($SongArray, $SubFiles[$i])
+        If not @Compiled Then ConsoleWrite("Added " & $SubFiles[$i] & @CRLF)
 	Next
 EndFunc   ;==>_Folder
 
