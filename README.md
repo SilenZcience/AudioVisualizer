@@ -48,6 +48,7 @@ This project provides an AudioVisualizer with a variety of useful customizations
 
 ### Made With
 [![AutoIt][MadeWith-AutoIt]](https://www.autoitscript.com/site)
+[![2.4.5.0][BassUDF]](https://www.autoitscript.com/forum/files/file/493-basszip/)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -116,6 +117,7 @@ AudioVisualizer.exe
 [OS-Windows]: https://svgshare.com/i/ZhY.svg
 
 [MadeWith-AutoIt]: https://img.shields.io/badge/Made%20with-AutoIt-brightgreen
+[BassUDF]: https://img.shields.io/badge/BassUDF-2.4.5.0-brightgreen
 
 [Warning]: https://img.shields.io/badge/warning-orange?style=for-the-badge
 
