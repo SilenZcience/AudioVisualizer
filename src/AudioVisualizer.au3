@@ -44,24 +44,24 @@ OnAutoItExitRegister("_close_reg")
 Global $BASS_PAUSE_POS
 Global Const $ResizeFactor = (@DesktopWidth/1920)
 Global Const $MoveFactor = Int((@DesktopWidth - 1920)/2)
-Global Const $width = 1920 + 2
-Global Const $height = 1080 + 42
-Global $hwnd = GUICreate("Visualization ~ Silas K.", $width, $height, -1, -1, $WS_POPUP, $WS_EX_ACCEPTFILES)
+Global Const $width = @DesktopWidth + 2
+Global Const $height = @DesktopHeight + 42
+Global $hwnd = GUICreate("AudioVisualizer", $width, $height, -1, -1, $WS_POPUP, $WS_EX_ACCEPTFILES)
 
 GUISetOnEvent(-3, "_close", $hwnd)
 GUIRegisterMsg(563, "WM_DROPFILES_FUNC")
 GUIRegisterMsg(0x020A, "_Mousewheel")
-GUISetState()
+GUISetState(@SW_SHOW, $hwnd)
 
 SoundSetWaveVolume($SoundSet)
 
 _GDIPlus_Startup()
-Global $graphics = _GDIPlus_GraphicsCreateFromHWND($hwnd)
-Global $bitmap = _GDIPlus_BitmapCreateFromGraphics($width, $height, $graphics)
-Global $vizbitmap = _GDIPlus_BitmapCreateFromGraphics($width, $height, $graphics)
-Global $backbuffer = _GDIPlus_ImageGetGraphicsContext($bitmap)
-Global $vizbuffer = _GDIPlus_ImageGetGraphicsContext($vizbitmap)
-Global $vizbuffer2 = _GDIPlus_ImageGetGraphicsContext($vizbitmap)
+Global Const $graphics = _GDIPlus_GraphicsCreateFromHWND($hwnd)
+Global Const $bitmap = _GDIPlus_BitmapCreateFromGraphics($width, $height, $graphics)
+Global Const $vizbitmap = _GDIPlus_BitmapCreateFromGraphics($width, $height, $graphics)
+Global Const $backbuffer = _GDIPlus_ImageGetGraphicsContext($bitmap)
+Global Const $vizbuffer = _GDIPlus_ImageGetGraphicsContext($vizbitmap)
+;Global Const $vizbuffer2 = _GDIPlus_ImageGetGraphicsContext($vizbitmap)
 
 Global $family = _GDIPlus_FontFamilyCreate("Arial")
 Global $font = _GDIPlus_FontCreate($family, 26 * (@DesktopWidth/1920))
@@ -75,7 +75,7 @@ Next
 
 _GDIPlus_GraphicsSetSmoothingMode($backbuffer, 2)
 _GDIPlus_GraphicsSetSmoothingMode($vizbuffer, 2)
-_GDIPlus_GraphicsSetSmoothingMode($vizbuffer2, 2)
+;_GDIPlus_GraphicsSetSmoothingMode($vizbuffer2, 2)
 
 Global $hexcolor = Hex(Int((@HOUR * 255) / 24), 2) & Hex(Int((@MIN * 255) / 60), 2) & Hex(Int((@SEC * 255) / 60), 2)
 Global $aColor = _ColorGetRGB("0x" & $hexcolor)
@@ -159,7 +159,7 @@ While 1
 
 	_ShowGraphics()
 
-	If _IsPressed(02) And WinActive($hwnd) Then ;rightclick
+	If _IsPressed(02, $user32.dll) And WinActive($hwnd) Then ;rightclick
 		If _Get_playstate($stream) = 2 and not $UseDeviceSound Then
 			$BASS_PAUSE_POS = _BASS_ChannelGetPosition($stream, 0)
 			If not @Compiled Then ConsoleWrite("Pause Position: " & $BASS_PAUSE_POS & @CRLF)
@@ -172,7 +172,7 @@ While 1
 	EndIf
 	If $UseDeviceSound Then ContinueLoop
 
-	If _IsPressed(25) And WinActive($hwnd) And TimerDiff($Timer1) > 300 Then ;leftarrow
+	If _IsPressed(25, $user32.dll) And WinActive($hwnd) And TimerDiff($Timer1) > 300 Then ;leftarrow
 		If $SongArrayIndex > 0 Then
 			$SongArrayIndex -= 2
 		Else
@@ -181,11 +181,11 @@ While 1
 		_StartFile()
 		$Timer1 = TimerInit()
 	EndIf
-	If _IsPressed(27) And WinActive($hwnd) And TimerDiff($Timer1) > 300 Then ;rightarrow
+	If _IsPressed(27, $user32.dll) And WinActive($hwnd) And TimerDiff($Timer1) > 300 Then ;rightarrow
 		If $SongArrayIndex < UBound($SongArray) - 1 Then _StartFile()
 		$Timer1 = TimerInit()
 	EndIf
-	If _IsPressed(20) And WinActive($hwnd) And TimerDiff($Timer1) > 300 Then ;Space
+	If _IsPressed(20, $user32.dll) And WinActive($hwnd) And TimerDiff($Timer1) > 300 Then ;Space
 		_Switch_AudioPlayback($stream)
 		$Timer1 = TimerInit()
 	EndIf
@@ -852,11 +852,11 @@ Func _ShowGraphics()
 
 	If $Delete Then
 		_GDIPlus_GraphicsClear($vizbuffer, 0xFF000000)
-		_GDIPlus_GraphicsClear($vizbuffer2, 0xFF000000)
+		;_GDIPlus_GraphicsClear($vizbuffer2, 0xFF000000)
 	EndIf
 	If $Fade Then
 		_GDIPlus_GraphicsFillRect($vizbuffer, 0, 0, $width, $height, $blacktrans)
-		_GDIPlus_GraphicsFillRect($vizbuffer2, 0, 0, $width, $height, $blacktrans)
+		;_GDIPlus_GraphicsFillRect($vizbuffer2, 0, 0, $width, $height, $blacktrans)
 	EndIf
 EndFunc
 
@@ -1024,14 +1024,12 @@ Func _StartFile()
 
 	If $stream = 0 Then Return
 	If StringRight($SongArray[$SongArrayIndex], 4) = "flac" Or StringRight($SongArray[$SongArrayIndex], 4) = ".ogg" Then
-		;$ptr = Bass_ChannelGetTags($stream, 2)
 		$ptr = _BASS_ChannelGetTags($stream, 2)
 		$temp = _GetID3StructFromOGGComment($ptr)
 		$SongString = DllStructGetData($temp, "Title")
 		If StringLen(DllStructGetData($temp, "Artist")) > 1 Then $SongString &= " - " & DllStructGetData($temp, "Artist")
 		$SongStringOpacity = 255
 	Else
-		;$ptr = Bass_ChannelGetTags($stream, 0)
 		$ptr = _BASS_ChannelGetTags($stream, 0)
 		$temp = DllStructCreate($ID3, $ptr)
 		$SongString = DllStructGetData($temp, "Title")
@@ -1128,11 +1126,11 @@ Func _close_reg()
 	_GDIPlus_PenDispose($SinPen2)
 	_GDIPlus_PenDispose($TrianglePen)
 	_GDIPlus_GraphicsDispose($vizbuffer)
+    ;_GDIPlus_GraphicsDispose($vizbuffer2)
 	_GDIPlus_GraphicsDispose($backbuffer)
 	_GDIPlus_BitmapDispose($vizbitmap)
 	_GDIPlus_BitmapDispose($bitmap)
 	_GDIPlus_GraphicsDispose($graphics)
 	_GDIPlus_Shutdown()
 	GUIDelete($hwnd)
-;~ 	ControlShow('classname=Shell_TrayWnd', '', '')
 EndFunc   ;==>_close_reg
