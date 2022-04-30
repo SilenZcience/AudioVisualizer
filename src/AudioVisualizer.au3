@@ -4,9 +4,9 @@
 #AutoIt3Wrapper_Outfile=..\bin\AudioVisualizer.exe
 #AutoIt3Wrapper_Res_Comment=Simple AudioVisualizer made in AutoIt
 #AutoIt3Wrapper_Res_Description=AudioVisualizer
-#AutoIt3Wrapper_Res_Fileversion=1.0.0.1
+#AutoIt3Wrapper_Res_Fileversion=1.0.0.3
 #AutoIt3Wrapper_Res_ProductName=AudioVisualizer
-#AutoIt3Wrapper_Res_ProductVersion=1.0.0.1
+#AutoIt3Wrapper_Res_ProductVersion=1.0.0.3
 #AutoIt3Wrapper_Res_Language=1033
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 
@@ -26,12 +26,9 @@ If _Singleton("AudioVisualizerSilasKraume", 1) == 0 Then Exit MsgBox($MB_SYSTEMM
 Opt("GUIOnEventMode", 1)
 Opt("MustDeclareVars", 1)
 
-OnAutoItExitRegister("_close_reg")
+_Init_Bass()
 
-_BASS_Startup(@ScriptDir & "\dll\bass.dll")
-_BASS_Init(0, -1, 44100, 0, "")
-_BASS_SetConfig($BASS_CONFIG_BUFFER, 1000)
-_BASS_RecordInit(-1)
+OnAutoItExitRegister("_close_reg")
 
 Global $SongArray[0]
 Global $SongArrayIndex = -1
@@ -126,7 +123,7 @@ Global $CircleSize = 30
 Global $CircleColortime = 0 ;0=static, 1=colortime, 2=colortimeinverted
 Global $CircleColor = "FF0000"
 Global $CircleBrush
-If $CircleColortime == 1 Then 
+If $CircleColortime == 1 Then
     $CircleBrush = _GDIPlus_BrushCreateSolid("0xFF" & $HexTimeColor[0])
 ElseIf $CircleColortime == 2 Then
     $CircleBrush = _GDIPlus_BrushCreateSolid("0xFF" & $HexTimeColor[1])
@@ -141,7 +138,7 @@ Global $TriangleGroundAngle = 0;$PI/2
 Global $TriangleSize = 200
 Global $TriangleColortime = 0 ;0=static, 1=colortime, 2=colortimeinverted
 Global $TriangleColor = "FF0000"
-If $TriangleColortime == 1 Then 
+If $TriangleColortime == 1 Then
     $TrianglePen = _GDIPlus_PenCreate("0xFF" & $HexTimeColor[0], 2)
 ElseIf $TriangleColortime == 2 Then
     $TrianglePen = _GDIPlus_PenCreate("0xFF" & $HexTimeColor[1], 2)
@@ -203,6 +200,18 @@ While True
 		$Timer2 = TimerInit()
 	EndIf
 WEnd
+
+Func _Init_Bass()
+    Local $bassPath = _PathFull("../dll/bass.dll")
+    If not FileExists($bassPath) Then
+        msgBox($MB_SYSTEMMODAL, "Error", "Couldn't find the bass.dll.")
+        Exit
+    EndIf
+    _BASS_Startup($bassPath)
+    _BASS_Init(0, -1, 44100, 0, "")
+    _BASS_SetConfig($BASS_CONFIG_BUFFER, 1000)
+    _BASS_RecordInit(-1)
+EndFunc
 
 Func _GUIControl()
 	Opt("GUIOnEventMode", 0)
@@ -517,7 +526,7 @@ Func _GUIControl()
 	EndIf
 	GUICtrlSetFont(-1, 11)
     GUICtrlSetColor(-1, 0xE1E1E1)
-    
+
 	Local $idApplyChanges = GUICtrlCreateButton("Apply Changes", $hwidth - 135, $hheight - 35, 125, 25)
 	GUICtrlSetFont(-1, 11)
 	;-------------------------------------------------------------------------------
@@ -849,9 +858,9 @@ Func _ShowGraphics()
         $SinPen2 = _GDIPlus_PenCreate("0xFF" & $HexTimeColor[1], 2)
     EndIf
 
-	If $CircleColortime == 1 Then 
+	If $CircleColortime == 1 Then
         $CircleBrush = _GDIPlus_BrushCreateSolid("0xFF" & $HexTimeColor[0])
-	ElseIf $CircleColortime == 2 Then 
+	ElseIf $CircleColortime == 2 Then
         $CircleBrush = _GDIPlus_BrushCreateSolid("0xFF" & $HexTimeColor[1])
     EndIf
 
