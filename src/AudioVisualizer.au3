@@ -77,9 +77,10 @@ _GDIPlus_GraphicsSetSmoothingMode($backbuffer, 2)
 _GDIPlus_GraphicsSetSmoothingMode($vizbuffer, 2)
 ;_GDIPlus_GraphicsSetSmoothingMode($vizbuffer2, 2)
 
-Global $hexcolor = Hex(Int((@HOUR * 255) / 24), 2) & Hex(Int((@MIN * 255) / 60), 2) & Hex(Int((@SEC * 255) / 60), 2)
-Global $aColor = _ColorGetRGB("0x" & $hexcolor)
-Global $hexcolorinv = Hex(255 - $aColor[0], 2) & Hex(255 - $aColor[1], 2) & Hex(255 - $aColor[2], 2)
+Global $HexTimeColor[2] = [-1, -1]
+$HexTimeColor[0] = Hex(Int((@HOUR * 255) / 24), 2) & Hex(Int((@MIN * 255) / 60), 2) & Hex(Int((@SEC * 255) / 60), 2)
+Global $aColor = _ColorGetRGB("0x" & $HexTimeColor[0])
+$HexTimeColor[1] = Hex(255 - $aColor[0], 2) & Hex(255 - $aColor[1], 2) & Hex(255 - $aColor[2], 2)
 
 Global $Delete = False
 Global $Fade = True ;0/1 of 2
@@ -89,7 +90,7 @@ Global $OverallX = 0
 Global $OverallY = 0
 
 Global $SinPen1, $SinPen2
-Global $Sin = True
+Global $Sin = False
 Global $Sin1 = True
 Global $Sin2 = True
 Global $SinFrom1 = 0
@@ -98,18 +99,24 @@ Global $SinFrom2 = $width
 Global $SinTo2 = $width / 2
 Global $Sin1Amp = 6
 Global $Sin2Amp = 6
-Global $Sin1Colortime = False
-Global $Sin1Colortimeinv = True ;0/1 of 2
-Global $Sin2Colortime = True
-Global $Sin2Colortimeinv = False ;0/1 of 2
+Global $Sin1Colortime = 2 ;0=static, 1=colortime, 2=colortimeinverted
+Global $Sin2Colortime = 1 ;0=static, 1=colortime, 2=colortimeinverted
 Global $Sin1Color = "00FF00"
 Global $Sin2Color = "00FF00"
-If $Sin1Colortime Then $SinPen1 = _GDIPlus_PenCreate("0xFF" & $hexcolor, 2)
-If $Sin1Colortimeinv Then $SinPen1 = _GDIPlus_PenCreate("0xFF" & $hexcolorinv, 2)
-If Not $Sin1Colortime And Not $Sin1Colortimeinv Then $SinPen1 = _GDIPlus_PenCreate("0xFF" & $Sin1Color, 2)
-If $Sin2Colortime Then $SinPen2 = _GDIPlus_PenCreate("0xFF" & $hexcolor, 2)
-If $Sin2Colortimeinv Then $SinPen2 = _GDIPlus_PenCreate("0xFF" & $hexcolorinv, 2)
-If Not $Sin2Colortime And Not $Sin2Colortimeinv Then $SinPen2 = _GDIPlus_PenCreate("0xFF" & $Sin2Color, 2)
+If $Sin1Colortime == 1 Then
+    $SinPen1 = _GDIPlus_PenCreate("0xFF" & $HexTimeColor[0], 2)
+ElseIf $Sin1Colortime == 2 Then
+    $SinPen1 = _GDIPlus_PenCreate("0xFF" & $HexTimeColor[1], 2)
+Else
+    $SinPen1 = _GDIPlus_PenCreate("0xFF" & $Sin1Color, 2)
+EndIf
+If $Sin2Colortime == 1 Then
+    $SinPen2 = _GDIPlus_PenCreate("0xFF" & $HexTimeColor[0], 2)
+ElseIf $Sin2Colortime == 2 Then
+    $SinPen2 = _GDIPlus_PenCreate("0xFF" & $HexTimeColor[1], 2)
+Else
+    $SinPen2 = _GDIPlus_PenCreate("0xFF" & $Sin2Color, 2)
+EndIf
 
 Global $CirclePen
 Global $Circle = True
@@ -118,25 +125,31 @@ Global $CircleAmountFrom = 100
 Global $CircleAmounTo = 500
 Global $CircleIndexTo = 50
 Global $CircleSize = 30
-Global $CircleColortime = False
-Global $CircleColortimeinv = False ;0/1 of 2
+Global $CircleColortime = 0 ;0=static, 1=colortime, 2=colortimeinverted
 Global $CircleColor = "FF0000"
 Global $CircleBrush
-If $CircleColortime Then $CircleBrush = _GDIPlus_BrushCreateSolid("0xFF" & $hexcolor)
-If $CircleColortimeinv Then $CircleBrush = _GDIPlus_BrushCreateSolid("0xFF" & $hexcolorinv)
-If Not $CircleColortime And Not $CircleColortimeinv Then $CircleBrush = _GDIPlus_BrushCreateSolid("0xFF" & $CircleColor)
+If $CircleColortime == 1 Then 
+    $CircleBrush = _GDIPlus_BrushCreateSolid("0xFF" & $HexTimeColor[0])
+ElseIf $CircleColortime == 2 Then
+    $CircleBrush = _GDIPlus_BrushCreateSolid("0xFF" & $HexTimeColor[1])
+Else
+    $CircleBrush = _GDIPlus_BrushCreateSolid("0xFF" & $CircleColor)
+EndIf
 
 Global $TrianglePen
 Global $Triangle = True
 Global $TriangleGroundAnglePlus = 0 ;$PI/50
 Global $TriangleGroundAngle = 0;$PI/2
 Global $TriangleSize = 200
-Global $TriangleColortime = False
-Global $TriangleColortimeinv = False ;0/1 of 2
+Global $TriangleColortime = 0 ;0=static, 1=colortime, 2=colortimeinverted
 Global $TriangleColor = "FF0000"
-If $TriangleColortime Then $TrianglePen = _GDIPlus_PenCreate("0xFF" & $hexcolor, 2)
-If $TriangleColortimeinv Then $TrianglePen = _GDIPlus_PenCreate("0xFF" & $hexcolorinv, 2)
-If Not $TriangleColortime And Not $TriangleColortimeinv Then $TrianglePen = _GDIPlus_PenCreate("0xFF" & $TriangleColor, 2)
+If $TriangleColortime == 1 Then 
+    $TrianglePen = _GDIPlus_PenCreate("0xFF" & $HexTimeColor[0], 2)
+ElseIf $TriangleColortime == 2 Then
+    $TrianglePen = _GDIPlus_PenCreate("0xFF" & $HexTimeColor[1], 2)
+Else
+    $TrianglePen = _GDIPlus_PenCreate("0xFF" & $TriangleColor, 2)
+EndIf
 
 Global $UseDeviceSound = False
 Global $SoundDeviceID = -1
@@ -156,7 +169,6 @@ Global $Timer2 = TimerInit()
 
 While 1
 ;~     Sleep(5)
-
 	_ShowGraphics()
 
 	If _IsPressed(02, $user32) And WinActive($hwnd) Then ;rightclick
@@ -247,17 +259,17 @@ Func _GUIControl()
 	Local $SinStrength1 = $Sin1Amp
 	Local $SinStrength2 = $Sin2Amp
 	Local $Sin1ColorMode
-	If $Sin1Colortime Then
+	If $Sin1Colortime == 1 Then
 		$Sin1ColorMode = "TimeColor"
-	ElseIf $Sin1Colortimeinv Then
+	ElseIf $Sin1Colortime == 2 Then
 		$Sin1ColorMode = "TimeColorInverted"
 	Else
 		$Sin1ColorMode = "StaticColor"
 	EndIf
 	Local $Sin2ColorMode
-	If $Sin2Colortime Then
+	If $Sin2Colortime == 1 Then
 		$Sin2ColorMode = "TimeColor"
-	ElseIf $Sin2Colortimeinv Then
+	ElseIf $Sin2Colortime == 2 Then
 		$Sin2ColorMode = "TimeColorInverted"
 	Else
 		$Sin2ColorMode = "StaticColor"
@@ -278,9 +290,9 @@ Func _GUIControl()
 	Local $CircleRandomness = $CircleIndexTo
 	Local $CircleStrength = $CircleSize
 	Local $CircleColorMode
-	If $CircleColortime Then
+	If $CircleColortime == 1 Then
 		$CircleColorMode = "TimeColor"
-	ElseIf $CircleColortimeinv Then
+	ElseIf $CircleColortime == 2 Then
 		$CircleColorMode = "TimeColorInverted"
 	Else
 		$CircleColorMode = "StaticColor"
@@ -299,9 +311,9 @@ Func _GUIControl()
 	Local $TriangleAngle = Round(($TriangleGroundAngle*180)/$PI)
 	Local $TriangleStrength = $TriangleSize
 	Local $TriangleColorMode
-	If $TriangleColortime Then
+	If $TriangleColortime == 1 Then
 		$TriangleColorMode = "TimeColor"
-	ElseIf $TriangleColortimeinv Then
+	ElseIf $TriangleColortime == 2 Then
 		$TriangleColorMode = "TimeColorInverted"
 	Else
 		$TriangleColorMode = "StaticColor"
@@ -730,25 +742,19 @@ Func _GUIControl()
 				$Sin2Amp = Int(GUICtrlRead($Strength2Input))
 				Switch $Sin1ColorMode
 					Case "TimeColor"
-						$Sin1Colortime = True
-						$Sin1Colortimeinv = False
+						$Sin1Colortime = 1
 					Case "TimeColorInverted"
-						$Sin1Colortime = False
-						$Sin1Colortimeinv = True
+						$Sin1Colortime = 2
 					Case "StaticColor"
-						$Sin1Colortime = False
-						$Sin1Colortimeinv = False
+						$Sin1Colortime = 0
 				EndSwitch
 				Switch $Sin2ColorMode
 					Case "TimeColor"
-						$Sin2Colortime = True
-						$Sin2Colortimeinv = False
+						$Sin2Colortime = 1
 					Case "TimeColorInverted"
-						$Sin2Colortime = False
-						$Sin2Colortimeinv = True
+						$Sin2Colortime = 2
 					Case "StaticColor"
-						$Sin2Colortime = False
-						$Sin2Colortimeinv = False
+						$Sin2Colortime = 0
 				EndSwitch
 				$Sin1Color = GUICtrlRead($Sin1ColorInput)
 				$Sin2Color = GUICtrlRead($Sin2ColorInput)
@@ -763,14 +769,11 @@ Func _GUIControl()
 				$CircleSize = Int(GUICtrlRead($CircleStrengthInput))
 				Switch $CircleColorMode
 					Case "TimeColor"
-						$CircleColortime = True
-						$CircleColortimeinv = False
+						$CircleColortime = 1
 					Case "TimeColorInverted"
-						$CircleColortime = False
-						$CircleColortimeinv = True
+						$CircleColortime = 2
 					Case "StaticColor"
-						$CircleColortime = False
-						$CircleColortimeinv = False
+						$CircleColortime = 0
 				EndSwitch
 				$CircleColor = GUICtrlRead($CircleColorInput)
 				If $TriangleMode = "On" Then
@@ -783,20 +786,17 @@ Func _GUIControl()
 				$TriangleSize = Int(GUICtrlRead($TriangleStrengthInput))
 				Switch $TriangleColorMode
 					Case "TimeColor"
-						$TriangleColortime = True
-						$TriangleColortimeinv = False
+						$TriangleColortime = 1
 					Case "TimeColorInverted"
-						$TriangleColortime = False
-						$TriangleColortimeinv = True
+						$TriangleColortime = 2
 					Case "StaticColor"
-						$TriangleColortime = False
-						$TriangleColortimeinv = False
+						$TriangleColortime = 0
 				EndSwitch
 				$TriangleColor = GUICtrlRead($TriangleColorInput)
-				If Not $Sin1Colortime And Not $Sin1Colortimeinv Then $SinPen1 = _GDIPlus_PenCreate("0xFF" & $Sin1Color, 2)
-				If Not $Sin2Colortime And Not $Sin2Colortimeinv Then $SinPen2 = _GDIPlus_PenCreate("0xFF" & $Sin2Color, 2)
-				If Not $CircleColortime And Not $CircleColortimeinv Then $CircleBrush = _GDIPlus_BrushCreateSolid("0xFF" & $CircleColor)
-				If Not $TriangleColortime And Not $TriangleColortimeinv Then $TrianglePen = _GDIPlus_PenCreate("0xFF" & $TriangleColor, 2)
+				If $Sin1Colortime == 0 Then $SinPen1 = _GDIPlus_PenCreate("0xFF" & $Sin1Color, 2)
+				If $Sin2Colortime == 0 Then $SinPen2 = _GDIPlus_PenCreate("0xFF" & $Sin2Color, 2)
+				If $CircleColortime == 0 Then $CircleBrush = _GDIPlus_BrushCreateSolid("0xFF" & $CircleColor)
+				If $TriangleColortime == 0 Then $TrianglePen = _GDIPlus_PenCreate("0xFF" & $TriangleColor, 2)
 			Case 0
 				If TimerDiff($Timer3) > 25 Then
 					_ShowGraphics()
@@ -837,26 +837,37 @@ Func _ShowGraphics()
 	EndIf
 	_GDIPlus_GraphicsDrawImageRect($graphics, $bitmap, 0, 0, $width, $height)
 
-	$hexcolor = Hex(Int((@HOUR * 255) / 24), 2) & Hex(Int((@MIN * 255) / 60), 2) & Hex(Int((@SEC * 255) / 60), 2)
-	$aColor = _ColorGetRGB("0x" & $hexcolor)
-	$hexcolorinv = Hex(255 - $aColor[0], 2) & Hex(255 - $aColor[1], 2) & Hex(255 - $aColor[2], 2)
+	$HexTimeColor[0] = Hex(Int((@HOUR * 255) / 24), 2) & Hex(Int((@MIN * 255) / 60), 2) & Hex(Int((@SEC * 255) / 60), 2)
+	$aColor = _ColorGetRGB("0x" & $HexTimeColor[0])
+	$HexTimeColor[1] = Hex(255 - $aColor[0], 2) & Hex(255 - $aColor[1], 2) & Hex(255 - $aColor[2], 2)
 
-	If $Sin1Colortime Then $SinPen1 = _GDIPlus_PenCreate("0xFF" & $hexcolor, 2)
-	If $Sin1Colortimeinv Then $SinPen1 = _GDIPlus_PenCreate("0xFF" & $hexcolorinv, 2)
-	If $Sin2Colortime Then $SinPen2 = _GDIPlus_PenCreate("0xFF" & $hexcolor, 2)
-	If $Sin2Colortimeinv Then $SinPen2 = _GDIPlus_PenCreate("0xFF" & $hexcolorinv, 2)
+	If $Sin1Colortime == 1 Then
+        $SinPen1 = _GDIPlus_PenCreate("0xFF" & $HexTimeColor[0], 2)
+	ElseIf $Sin1Colortime == 2 Then
+        $SinPen1 = _GDIPlus_PenCreate("0xFF" & $HexTimeColor[1], 2)
+    EndIf
+	If $Sin2Colortime == 1 Then
+        $SinPen2 = _GDIPlus_PenCreate("0xFF" & $HexTimeColor[0], 2)
+	ElseIf $Sin2Colortime == 2 Then
+        $SinPen2 = _GDIPlus_PenCreate("0xFF" & $HexTimeColor[1], 2)
+    EndIf
 
-	If $CircleColortime Then $CircleBrush = _GDIPlus_BrushCreateSolid("0xFF" & $hexcolor)
-	If $CircleColortimeinv Then $CircleBrush = _GDIPlus_BrushCreateSolid("0xFF" & $hexcolorinv)
+	If $CircleColortime == 1 Then 
+        $CircleBrush = _GDIPlus_BrushCreateSolid("0xFF" & $HexTimeColor[0])
+	ElseIf $CircleColortime == 2 Then 
+        $CircleBrush = _GDIPlus_BrushCreateSolid("0xFF" & $HexTimeColor[1])
+    EndIf
 
-	If $TriangleColortime Then $TrianglePen = _GDIPlus_PenCreate("0xFF" & $hexcolor, 2)
-	If $TriangleColortimeinv Then $TrianglePen = _GDIPlus_PenCreate("0xFF" & $hexcolorinv, 2)
+	If $TriangleColortime == 1 Then
+        $TrianglePen = _GDIPlus_PenCreate("0xFF" & $HexTimeColor[0], 2)
+	ElseIf $TriangleColortime == 2 Then
+        $TrianglePen = _GDIPlus_PenCreate("0xFF" & $HexTimeColor[1], 2)
+    EndIf
 
 	If $Delete Then
 		_GDIPlus_GraphicsClear($vizbuffer, 0xFF000000)
 		;_GDIPlus_GraphicsClear($vizbuffer2, 0xFF000000)
-	EndIf
-	If $Fade Then
+	ElseIf $Fade Then
 		_GDIPlus_GraphicsFillRect($vizbuffer, 0, 0, $width, $height, $blacktrans)
 		;_GDIPlus_GraphicsFillRect($vizbuffer2, 0, 0, $width, $height, $blacktrans)
 	EndIf
@@ -1035,8 +1046,6 @@ Func WM_DROPFILES_FUNC($hwnd, $msgID, $wParam, $lParam)
 EndFunc   ;==>WM_DROPFILES_FUNC
 
 Func _StartFile()
-    _ArrayDisplay($SongArray)
-    ConsoleWrite("!songindex: "  & $SongArrayIndex & @LF)
     If Ubound($SongArray) == 0 Then Return
 	_BASS_StreamFree($StreamHandle)
 	Local $ptr, $temp
@@ -1087,8 +1096,7 @@ Func _File($File)
 EndFunc   ;==>_File
 
 Func _IsFolder($path)
-	If StringInStr(FileGetAttrib($path), "D") Then Return 1
-	Return 0
+	Return StringInStr(FileGetAttrib($path), "D")
 EndFunc   ;==>_IsFolder
 
 Func _GetID3StructFromOGGComment($ptr)
