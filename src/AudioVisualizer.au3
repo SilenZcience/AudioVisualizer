@@ -21,25 +21,24 @@
 #include <GUIConstantsEx.au3>
 #include <EditConstants.au3>
 
-If _Singleton("AudioVisualizerSilasKraume", 1) = 0 Then Exit MsgBox($MB_SYSTEMMODAL, "Error", "An occurrence of 'AudioVisualizer' by Silas Kraume is already running!", 2)
+If _Singleton("AudioVisualizerSilasKraume", 1) == 0 Then Exit MsgBox($MB_SYSTEMMODAL, "Error", "An occurrence of 'AudioVisualizer' by Silas Kraume is already running!", 2)
 
-Global $SongArray[0]
-Global $SongArrayIndex = -1
-Global $SongStateLast = 0
-Global $SongStateNow = 0
-Global $SoundSet = 2
-Global $bass
-Global Const $PI = 3.14159265358979323
+Opt("GUIOnEventMode", 1)
+Opt("MustDeclareVars", 1)
+
+OnAutoItExitRegister("_close_reg")
 
 _BASS_Startup(@ScriptDir & "\dll\bass.dll")
 _BASS_Init(0, -1, 44100, 0, "")
 _BASS_SetConfig($BASS_CONFIG_BUFFER, 1000)
 _BASS_RecordInit(-1)
 
-Opt("GUIOnEventMode", 1)
-Opt("MustDeclareVars", 1)
-
-OnAutoItExitRegister("_close_reg")
+Global $SongArray[0]
+Global $SongArrayIndex = -1
+Global $SongStateLast = 0
+Global $SongStateNow = 0
+Global $SoundSet = 2
+Global Const $PI = 3.14159265358979323
 
 Global $BASS_PAUSE_POS
 Global Const $ResizeFactor = (@DesktopWidth/1920)
@@ -118,7 +117,6 @@ Else
     $SinPen2 = _GDIPlus_PenCreate("0xFF" & $Sin2Color, 2)
 EndIf
 
-Global $CirclePen
 Global $Circle = True
 Global $CircleSeed = Random(0, 10000, 1)
 Global $CircleAmountFrom = 100
@@ -167,18 +165,18 @@ Global $b = DllStructCreate("float[128]")
 Global $Timer1 = TimerInit()
 Global $Timer2 = TimerInit()
 
-While 1
+While True
 ;~     Sleep(5)
 	_ShowGraphics()
 
 	If _IsPressed(02, $user32) And WinActive($hwnd) Then ;rightclick
-		If _Get_playstate() = 2 and not $UseDeviceSound Then
+		If _Get_playstate() == 2 and not $UseDeviceSound Then
 			$BASS_PAUSE_POS = _BASS_ChannelGetPosition($StreamHandle, 0)
 			If not @Compiled Then ConsoleWrite("Pause Position: " & $BASS_PAUSE_POS & @CRLF)
 			_BASS_ChannelPause($StreamHandle)
 		EndIf
 		_GUIControl()
-		If _Get_playstate() = 3 and not $UseDeviceSound Then
+		If _Get_playstate() == 3 and not $UseDeviceSound Then
 			_BASS_ChannelPlay($StreamHandle, 0)
 		EndIf
 	EndIf
@@ -189,18 +187,15 @@ While 1
         $SongArrayIndex -= 1
 		_StartFile()
 		$Timer1 = TimerInit()
-	EndIf
-	If _IsPressed(27, $user32) And WinActive($hwnd) And TimerDiff($Timer1) > 300 Then ;rightarrow
+	ElseIf _IsPressed(27, $user32) And WinActive($hwnd) And TimerDiff($Timer1) > 300 Then ;rightarrow
 		If $SongArrayIndex < UBound($SongArray) - 1 Then _StartFile()
 		$Timer1 = TimerInit()
-	EndIf
-	If _IsPressed(20, $user32) And WinActive($hwnd) And TimerDiff($Timer1) > 300 Then ;Space
+	ElseIf _IsPressed(20, $user32) And WinActive($hwnd) And TimerDiff($Timer1) > 300 Then ;Space
 		_Switch_AudioPlayback()
 		$Timer1 = TimerInit()
-	EndIf
-	If TimerDiff($Timer2) > 750 Then
+	ElseIf TimerDiff($Timer2) > 750 Then
 		$SongStateNow = _Get_playstate()
-		If $SongStateNow = 1 And $SongArrayIndex < UBound($SongArray) - 1 Then _StartFile()
+		If $SongStateNow == 1 And $SongArrayIndex < UBound($SongArray) - 1 Then _StartFile()
 		If $SongStateNow <> $SongStateLast Then
 			If not @Compiled Then ConsoleWrite("SongState: " & $SongStateNow & @CRLF)
 			$SongStateLast = $SongStateNow
@@ -235,19 +230,19 @@ Func _GUIControl()
 
 	;--------------------------------------------------------------------Sinus
 	Local $SinMode
-	If $Sin = True Then
+	If $Sin Then
 		$SinMode = "On"
 	Else
 		$SinMode = "Off"
 	EndIf
 	Local $Sin1Mode
-	If $Sin1 = True Then
+	If $Sin1 Then
 		$Sin1Mode = "On"
 	Else
 		$Sin1Mode = "Off"
 	EndIf
 	Local $Sin2Mode
-	If $Sin2 = True Then
+	If $Sin2 Then
 		$Sin2Mode = "On"
 	Else
 		$Sin2Mode = "Off"
@@ -280,7 +275,7 @@ Func _GUIControl()
 
 	;--------------------------------------------------------------------Circle
 	Local $CircleMode
-	If $Circle = True Then
+	If $Circle Then
 		$CircleMode = "On"
 	Else
 		$CircleMode = "Off"
@@ -302,7 +297,7 @@ Func _GUIControl()
 
 	;--------------------------------------------------------------------Triangle
 	Local $TriangleMode
-	If $Triangle = True Then
+	If $Triangle Then
 		$TriangleMode = "On"
 	Else
 		$TriangleMode = "Off"
@@ -563,26 +558,26 @@ Func _GUIControl()
 						GUICtrlSetState($FadeStrengthInput, $GUI_HIDE)
 				EndSwitch
 			Case $SinSwitch
-				If $SinMode = "On" Then
+				If $SinMode == "On" Then
 					$SinMode = "Off"
 					GUICtrlSetData($SinLabel, $SinMode)
-				ElseIf $SinMode = "Off" Then
+				ElseIf $SinMode == "Off" Then
 					$SinMode = "On"
 					GUICtrlSetData($SinLabel, $SinMode)
 				EndIf
 			Case $Sin1Switch
-				If $Sin1Mode = "On" Then
+				If $Sin1Mode == "On" Then
 					$Sin1Mode = "Off"
 					GUICtrlSetData($Sin1Label, $Sin1Mode)
-				ElseIf $Sin1Mode = "Off" Then
+				ElseIf $Sin1Mode == "Off" Then
 					$Sin1Mode = "On"
 					GUICtrlSetData($Sin1Label, $Sin1Mode)
 				EndIf
 			Case $Sin2Switch
-				If $Sin2Mode = "On" Then
+				If $Sin2Mode == "On" Then
 					$Sin2Mode = "Off"
 					GUICtrlSetData($Sin2Label, $Sin2Mode)
-				ElseIf $Sin2Mode = "Off" Then
+				ElseIf $Sin2Mode == "Off" Then
 					$Sin2Mode = "On"
 					GUICtrlSetData($Sin2Label, $Sin2Mode)
 				EndIf
@@ -623,10 +618,10 @@ Func _GUIControl()
 						GUICtrlSetState($Sin2ColorInput, $GUI_HIDE)
 				EndSwitch
 			Case $CircleSwitch
-				If $CircleMode = "On" Then
+				If $CircleMode == "On" Then
 					$CircleMode = "Off"
 					GUICtrlSetData($CircleLabel, $CircleMode)
-				ElseIf $CircleMode = "Off" Then
+				ElseIf $CircleMode == "Off" Then
 					$CircleMode = "On"
 					GUICtrlSetData($CircleLabel, $CircleMode)
 				EndIf
@@ -649,10 +644,10 @@ Func _GUIControl()
 						GUICtrlSetState($CircleColorInput, $GUI_HIDE)
 				EndSwitch
 			Case $TriangleSwitch
-				If $TriangleMode = "On" Then
+				If $TriangleMode == "On" Then
 					$TriangleMode = "Off"
 					GUICtrlSetData($TriangleLabel, $TriangleMode)
-				ElseIf $TriangleMode = "Off" Then
+				ElseIf $TriangleMode == "Off" Then
 					$TriangleMode = "On"
 					GUICtrlSetData($TriangleLabel, $TriangleMode)
 				EndIf
@@ -676,8 +671,6 @@ Func _GUIControl()
 				EndSwitch
 			Case $idSwitchToDeviceSound
 				$CableDevice = _GetNextDeviceChannel()
-                ConsoleWrite("!deviceid: " & $SoundDeviceID & @LF)
-                _ArrayDisplay($CableDevice)
 				If @error Then
 					$DeviceSoundOn = False
 					GUICtrlSetData($idSwitchToDeviceSound, "InternalBass")
@@ -719,19 +712,19 @@ Func _GUIControl()
 				EndSwitch
 				$OverallX = Int(GUICtrlRead($XInput))
 				$OverallY = Int(GUICtrlRead($YInput))
-				If $SinMode = "On" Then
+				If $SinMode == "On" Then
 					$Sin = True
-				ElseIf $SinMode = "Off" Then
+				ElseIf $SinMode == "Off" Then
 					$Sin = False
 				EndIf
-				If $Sin1Mode = "On" Then
+				If $Sin1Mode == "On" Then
 					$Sin1 = True
-				ElseIf $Sin1Mode = "Off" Then
+				ElseIf $Sin1Mode == "Off" Then
 					$Sin1 = False
 				EndIf
-				If $Sin2Mode = "On" Then
+				If $Sin2Mode == "On" Then
 					$Sin2 = True
-				ElseIf $Sin2Mode = "Off" Then
+				ElseIf $Sin2Mode == "Off" Then
 					$Sin2 = False
 				EndIf
 				$SinFrom1 = Int(GUICtrlRead($FromInput1))
@@ -758,9 +751,9 @@ Func _GUIControl()
 				EndSwitch
 				$Sin1Color = GUICtrlRead($Sin1ColorInput)
 				$Sin2Color = GUICtrlRead($Sin2ColorInput)
-				If $CircleMode = "On" Then
+				If $CircleMode == "On" Then
 					$Circle = True
-				ElseIf $CircleMode = "Off" Then
+				ElseIf $CircleMode == "Off" Then
 					$Circle = False
 				EndIf
 				$CircleAmountFrom = Int(GUICtrlRead($CircleFrom))
@@ -776,9 +769,9 @@ Func _GUIControl()
 						$CircleColortime = 0
 				EndSwitch
 				$CircleColor = GUICtrlRead($CircleColorInput)
-				If $TriangleMode = "On" Then
+				If $TriangleMode == "On" Then
 					$Triangle = True
-				ElseIf $TriangleMode = "Off" Then
+				ElseIf $TriangleMode == "Off" Then
 					$Triangle = False
 				EndIf
 				$TriangleGroundAngle = ($PI*Int(GUICtrlRead($TriangleStartInput)))/180
@@ -814,7 +807,7 @@ EndFunc   ;==>_GUIControl
 Func _GetNextDeviceChannel()
 	$SoundDeviceID += 1
 	Local $DeviceInfo = _BASS_RecordGetDeviceInfo($SoundDeviceID)
-	If @error = $BASS_ERROR_DEVICE Then
+	If @error == $BASS_ERROR_DEVICE Then
 		$SoundDeviceID = -1
 		Return SetError($BASS_ERROR_DEVICE, 0, $DeviceInfo)
 	EndIf
@@ -874,14 +867,14 @@ Func _ShowGraphics()
 EndFunc
 
 Func _Switch_AudioPlayback()
-	If _Get_playstate() = 2 Then
+	If _Get_playstate() == 2 Then
 		$BASS_PAUSE_POS = _BASS_ChannelGetPosition($StreamHandle, 0)
 		If not @Compiled Then ConsoleWrite("Pause Position: " & $BASS_PAUSE_POS & @CRLF)
 		_BASS_ChannelPause($StreamHandle)
 		Local $ChannelPosition = _GetSongPositionString($BASS_PAUSE_POS)
 		$SongString = "Paused (" & $ChannelPosition & ")"
 		$SongStringOpacity = 255
-	ElseIf _Get_playstate() = 3 Then
+	ElseIf _Get_playstate() == 3 Then
 		_BASS_ChannelPlay($StreamHandle, 0)
 		$SongString = "Resumed"
 		$SongStringOpacity = 255
@@ -914,7 +907,7 @@ Func _TicksToTimeFormat($iTicks, $iHours = 0, $iMins = 0, $iSecs = 0)
 		Else
 			Return ($iMins & ":" & $iSecs)
 		EndIf
-	ElseIf Number($iTicks) = 0 Then
+	ElseIf Number($iTicks) == 0 Then
 		Return "00"
 	Else
 		Return SetError(1, 0, 0)
@@ -1054,7 +1047,7 @@ Func _StartFile()
     If $SongArrayIndex < 0 Then $SongArrayIndex = 0
 	$StreamHandle = _BASS_StreamCreateFile(False, $SongArray[$SongArrayIndex], 0, 0, 0)
 
-	If $StreamHandle = 0 Then Return
+	If $StreamHandle == 0 Then Return
 	If StringRight($SongArray[$SongArrayIndex], 4) = "flac" Or StringRight($SongArray[$SongArrayIndex], 4) = ".ogg" Then
 		$ptr = _BASS_ChannelGetTags($StreamHandle, 2)
 		$temp = _GetID3StructFromOGGComment($ptr)
@@ -1068,7 +1061,7 @@ Func _StartFile()
 		If StringLen(DllStructGetData($temp, "Artist")) > 1 Then $SongString &= " - " & DllStructGetData($temp, "Artist")
 		$SongStringOpacity = 255
 	EndIf
-	If $SongString = "0" Then $SongString = ""
+	If $SongString == "0" Then $SongString = ""
 
 	_BASS_ChannelPlay($StreamHandle, 1)
 EndFunc   ;==>_StartFile
@@ -1079,7 +1072,7 @@ Func _Folder($Folder)
 	Local $SubFiles = _FileListToArrayRec($Folder, "*", $FLTAR_FILES, $FLTAR_RECUR, $FLTAR_SORT, $FLTAR_FULLPATH)
 	For $i = 1 To UBound($SubFiles) - 1
 		$aPathSplit = _PathSplit($SubFiles[$i], $sDrive, $sDir, $sFileName, $sExtension)
-		If $sExtension = ".mp3" Or $sExtension = ".wav" Or $sExtension = ".flac" Or $sExtension = ".ogg" Then
+		If $sExtension == ".mp3" Or $sExtension == ".wav" Or $sExtension == ".flac" Or $sExtension == ".ogg" Then
 			_ArrayAdd($SongArray, $SubFiles[$i])
 			If not @Compiled Then ConsoleWrite("Added " & $SubFiles[$i] & @CRLF)
 		EndIf
@@ -1089,7 +1082,7 @@ EndFunc   ;==>_Folder
 Func _File($File)
 	Local $sDrive = "", $sDir = "", $sFileName = "", $sExtension = ""
 	Local $aPathSplit = _PathSplit($File, $sDrive, $sDir, $sFileName, $sExtension)
-	If $sExtension = ".mp3" Or $sExtension = ".wav" Or $sExtension = ".flac" Or $sExtension = ".ogg" Then
+	If $sExtension == ".mp3" Or $sExtension == ".wav" Or $sExtension == ".flac" Or $sExtension == ".ogg" Then
 		_ArrayAdd($SongArray, $File)
 		If not @Compiled Then ConsoleWrite("Added " & $File & @CRLF)
 	EndIf
@@ -1104,7 +1097,7 @@ Func _GetID3StructFromOGGComment($ptr)
 	Do
 		$s = DllStructCreate("char[255];", $ptr)
 		$string = DllStructGetData($s, 1)
-		If StringLeft($string, 1) = Chr(0) Then ExitLoop
+		If StringLeft($string, 1) == Chr(0) Then ExitLoop
 
 		Switch StringLeft($string, StringInStr($string, "=") - 1)
 			Case "title"
