@@ -129,7 +129,7 @@ AudioVisualizer.exe
 > **SilenZcience** <br/>
 [![GitHub-SilenZcience][GitHub-SilenZcience]](https://github.com/SilenZcience)
 
-[OS-Windows]: https://svgshare.com/i/ZhY.svg
+[OS-Windows]: https://img.shields.io/badge/os-windows-green
 
 [MadeWith-AutoIt]: https://img.shields.io/badge/Made%20with-AutoIt-brightgreen
 [BassUDF]: https://img.shields.io/badge/BassUDF-2.4.5.0-brightgreen
